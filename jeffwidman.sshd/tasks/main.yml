@@ -1,0 +1,50 @@
+---
+# tasks file for sshd
+
+- name: OpenSSH Server and Sudo should be installed
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openssh-server
+    - sudo
+
+#- name: Ensure wheel group has sudo access
+#  lineinfile:
+#    dest: "{{ sudo_config_file }}"
+#    state: present
+#    regexp: "^%wheel"
+#    line: "{{ wheel_sudo_access }}"
+#    validate: "visudo -cf %s"
+
+#- name: Ensure users exist who will have SSH access
+#  user:
+#      name: root
+#      state: present
+#      groups: "{{ item.groups }}"
+#      #password: "{{ item.password }}"
+#  with_items: "{{ ssh_users }}"
+
+- name: Add authorized SSH keys for these users
+  authorized_key:
+    user: root
+    key: "{{ item }}"
+  with_file_glob:
+    - "/home/dimonf/secr/keys/ssh_pub_keys"
+  register: add_identity_key
+  notify: restart sshd
+
+- name: Configure sshd
+  when: add_identity_key|success and not add_identity_key|skipped # to prevent accidental lockouts
+  lineinfile:
+    dest: "{{ sshd_config_file }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - { regexp: "^#?PermitRootLogin", line: "PermitRootLogin {{ permit_root_login }}" }
+    - { regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication {{ password_authentication }}" }
+    - { regexp: "^#?PermitEmptyPasswords", line: "PermitEmptyPasswords {{ permit_empty_passwords }}" }
+    - { regexp: "^#?ChallengeResponseAuthentication", line: "ChallengeResponseAuthentication {{ challenge_response_authentication }}" }
+    - { regexp: "^#?UsePAM", line: "UsePAM {{ use_pam }}" }
+  notify: restart sshd

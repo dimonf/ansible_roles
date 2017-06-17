@@ -1,0 +1,18 @@
+---
+# defaults file for sshd
+
+# Users who should have SSH access.
+# Don't forget to add to "wheel" group if need sudo.
+
+sudo_config_file: /etc/sudoers
+# Wheel defaults to passwordless sudo access to prevent accidental lockouts
+wheel_sudo_access: "%wheel ALL=(ALL) NOPASSWD: ALL"
+
+sshd_config_file: /etc/ssh/sshd_config
+
+# 'yes' and 'no' must be quoted to prevent Ansible converting to True/False
+permit_root_login: "yes"
+password_authentication: "yes"
+permit_empty_passwords: "no"
+challenge_response_authentication: "no"
+use_pam: "yes"
