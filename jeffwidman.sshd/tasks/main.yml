@@ -1,14 +1,16 @@
 ---
 # tasks file for sshd
 
-- name: OpenSSH Server and Sudo should be installed
+- name: OpenSSH Server, sudo and iptables should be installed
   package:
     name: "{{ item }}"
     state: present
   with_items:
     - openssh-server
     - sudo
+    - iptables-persistent
 
+# no need for group/user modesl as we intend to login as root
 #- name: Ensure wheel group has sudo access
 #  lineinfile:
 #    dest: "{{ sudo_config_file }}"
@@ -30,7 +32,7 @@
     user: root
     key: "{{ item }}"
   with_file_glob:
-    - "/home/dimonf/secr/keys/ssh_pub_keys"
+    - "{{ sshd_auth_pub_dir }}"
   register: add_identity_key
   notify: restart sshd
 
