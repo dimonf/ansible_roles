@@ -8,14 +8,45 @@
   with_items:
     - iptables-persistent
   register: iptables-persistent-pkg
+  tags:
+    - iptables
 
 #this role assumes thas os = debian derived
 #INPUT chain of filter table is empty on minimal initial installation
 #file {{ ip_tables_rules_file_v4 }} contains output of iptables-save
 #as iptables-persistent package installation complete.
 
+#ATTENTION!!! blockinfile relies on DOCKER-ISOLATION line, added
+#previously by docker installer. In other words, run this role AFTER
+#docker swarm is installed
+
+- debug:
+    var: ip_tables_rules_file_v4 
+  tags:
+    - iptables
+
 - name: insert rules into INPUT chain of filter table
   blockinfile:
     backup: yes
     create: no
-    insertafter: 
+    insertbefore: '-A FORWARD -j DOCKER-ISOLATION'
+    path: '{{ ip_tables_rules_file_v4 }}'
+    state: present
+    block: |
+      -A INPUT -i lo -j ACCEPT
+      -A INPUT -d 127.0.0.0/8 ! -i lo -j REJECT --reject-with icmp-port-unreachable
+      -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+      -A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
+      -A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
+      -A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables denied:" --log-level 7
+      -A INPUT -p tcp -m tcp --dport 2376 -j ACCEPT
+      -A INPUT -p tcp -m tcp --dport 2377 -j ACCEPT
+      -A INPUT -p tcp -m tcp --dport 7946 -j ACCEPT
+      -A INPUT -p udp -m udp --dport 7946 -j ACCEPT
+      -A INPUT -p udp -m udp --dport 4789 -j ACCEPT
+      -A INPUT -j REJECT --reject-with icmp-port-unreachable
+    validate:
+      - 'iptables-restore --test %s'
+  tags: 
+    - iptables
+
