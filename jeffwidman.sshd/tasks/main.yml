@@ -11,10 +11,13 @@
 
 - name: Add authorized SSH keys for these users
   authorized_key:
-    user: root
-    key: "{{ lookup('file', item) }}"
-  with_fileglob:
-    - "{{ sshd_auth_pub_dir }}"
+       user: root
+#    key: "{{ lookup('file', item) }}"
+       key: "{{ item }}"
+  with_items:
+       - "{{ ssh_pub_keys }}"
+#  with_fileglob:
+#    - "{{ sshd_auth_pub_dir }}"
   register: add_identity_key
   notify: restart sshd
   tags: 
