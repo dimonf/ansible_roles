@@ -1,0 +1,21 @@
+---
+# task file for iptables
+
+- name: install necessary packages
+  package: 
+   name:  "{{ item }}"
+   state: present
+  with_items:
+    - iptables-persistent
+  register: iptables-persistent-pkg
+
+#this role assumes thas os = debian derived
+#INPUT chain of filter table is empty on minimal initial installation
+#file {{ ip_tables_rules_file_v4 }} contains output of iptables-save
+#as iptables-persistent package installation complete.
+
+- name: insert rules into INPUT chain of filter table
+  blockinfile:
+    backup: yes
+    create: no
+    insertafter: 
