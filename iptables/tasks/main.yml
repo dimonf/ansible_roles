@@ -29,6 +29,7 @@
       -A INPUT -p tcp -m tcp --dport 7946 -j ACCEPT
       -A INPUT -p udp -m udp --dport 7946 -j ACCEPT
       -A INPUT -p udp -m udp --dport 4789 -j ACCEPT
+      -A INPUT -p tcp -m tcp --dport 5000 -j ACCEPT
 
 - name: insert terminator (priority 99, low)
   iptables_raw:
