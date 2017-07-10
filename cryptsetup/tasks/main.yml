@@ -1,0 +1,41 @@
+---
+
+#setup encrypted swap on node
+#setup encrypted block device
+#mount encrypted device
+- name: ensure that required packages are installed
+  package:
+    name: "{{ item }}"
+    state: 'latest'
+  with_items:
+    - cryptsetup
+
+- name: check if block device exists
+  shell: 'blkid | grep TYPE="crypto_LUKS" | grep '
+
+- name: check if LUKS device already decrypted
+  shell: 'echo b'
+
+- name: check if LUKS device already mounted
+  shell: 'echo c' "{{ cryptsetup_pass }}"
+
+- name: check if docker daemon is up and running
+  shell: 'echo d'
+
+- name: disable auto start of dockerd 
+  shell: 'echo e'
+
+- name: stop docker daemon
+  shell: 'echo f'
+
+- name: check if directory on ecrypted device is empty
+  shell: 'echo g'
+
+- name: copy files from standard location to encrypted directory
+  shell: 'echo h'
+
+- name: alter root dir in docerd config file
+  shell: 'echo i'
+
+- name: start docker
+  shell: 'echo j'
