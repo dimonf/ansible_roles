@@ -1,0 +1,4 @@
+---
+docker_root_crypt_file: .is_docker_crypt_root
+docker_root_crypt_text: this file helps to identify crypted directory
+docker_root: /var/lib/docker

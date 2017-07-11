@@ -1,39 +1,56 @@
 ---
+#move docker daemon root dir to encrypted directory
+
+- name: check whether current docker root is encrypted
+  lineinfile:
+    path: "{{ docker_root }}/{{ docker_root_crypt_file }}"
+    line: "{{docker_root_crypt_text}}"
+    state: present
+  check_mode: yes
+  failed_when: False
+  register: check_crypt
+
+# task is copied from cryptsetup role
+- name: check if encrypted FS is mounted
+  shell: "mount | grep /dev/mapper/{{crypt_blk}}| grep {{crypt_mount_point}}"
+  changed_when: False
+  register: luks_dev_is_mounted
+
+- name: stop docker daemon if running
+  service: 
+    name: docker
+    state: stopped
+  when: (check_crypt.rc| d(0) > 0)
+     or (check_crypt.changed | d(False))
+
+#inspired by: https://gist.github.com/keo/00f20ef27eddcdae78ab
+- name: setup bind mounts for Docker root
+  shell: |
+      mkdir -p  "{{crypt_mount_point}}{{docker_root}}"
+      mount --bind "{{crypt_mount_point}}{{docker_root}}" "{{docker_root}}"
+  when: (check_crypt.rc| d(0) > 0)
+     or (check_crypt.changed | d(False))
+
+- name: mark directory as "encrypted"
+  lineinfile:
+    path: "{{ docker_root }}/{{ docker_root_crypt_file }}"
+    line: "{{docker_root_crypt_text}}"
+    create: yes
+    state: present
+  when: (check_crypt.rc| d(0) > 0)
+     or (check_crypt.changed | d(False))
+
+- name: start Docker service
+  service: 
+    name: docker
+    state: started
+
+#stop docker, bind-mount encrypted directory and start docker deamon
 
 
-
-
-
-
-
-
-
-
-#
-#- name: check if docker daemon is up and running
-#  shell: 'echo d'
-#  changed_when: False
-#
-#- name: disable auto start of dockerd 
-#  shell: 'echo e'
-#  changed_when: False
-#
-#- name: stop docker daemon
-#  shell: 'echo f'
-#  changed_when: False
-#
-#- name: check if directory on ecrypted device is empty
-#  shell: 'echo g'
-#  changed_when: False
-#
-#- name: copy files from standard location to encrypted directory
-#  shell: 'echo h'
-#  changed_when: False
-#
-#- name: alter root dir in docerd config file
-#  shell: 'echo i'
-#  changed_when: False
-#
-#- name: start docker
-#  shell: 'echo j'
-#  changed_when: False
+#- name: debug
+#  debug:
+#    var: "{{item}}"
+#  with_items:
+#    - check_crypt
+#    - crypt_blk
