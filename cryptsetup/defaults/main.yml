@@ -1,3 +1,4 @@
 --- 
 crypt_blk: datafs
 crypt_dev: /dev/mapper/vg0-data 
+crypt_mount_point: /data

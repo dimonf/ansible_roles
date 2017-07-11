@@ -10,32 +10,66 @@
   with_items:
     - cryptsetup
 
+#- name: check if block device exists
+#  shell: 'blkid | grep TYPE="crypto_LUKS" | grep '
+
 - name: check if block device exists
-  shell: 'blkid | grep TYPE="crypto_LUKS" | grep '
+  stat:
+    path: '{{ crypt_dev }}'
+  changed_when: False
+  failed_when: not blk_dev.stat.exists
+  register: blk_dev
 
-- name: check if LUKS device already decrypted
-  shell: 'echo b'
+- name: check if the block device is mounted
+  shell: "mount| grep {{ crypt_dev }}"
+  changed_when: False
+  failed_when: blk_dev_is_mounted.rc == 0
+  register: blk_dev_is_mounted
 
-- name: check if LUKS device already mounted
-  shell: 'echo c' "{{ cryptsetup_pass }}"
+- name: Check if the block device is of LUKS format
+  shell: "cryptsetup isLuks {{ crypt_dev }}"
+  changed_when: False
+  failed_when: False
+  register: blk_dev_is_luks
 
-- name: check if docker daemon is up and running
-  shell: 'echo d'
+- name: format LUKS device
+  shell: "echo {{ cryptsetup_pass }} | cryptsetup  luksFormat --key-file=- 
+         --batch-mode --verbose {{ crypt_dev }} "
+  when: blk_dev_is_luks.rc > 0 
 
-- name: disable auto start of dockerd 
-  shell: 'echo e'
+- name: check if LUKS device is active
+  shell: "cryptsetup status {{ crypt_blk }}"
+  changed_when: False
+  failed_when: False
+  register: luks_dev_is_active
 
-- name: stop docker daemon
-  shell: 'echo f'
+- name: open LUKS device
+  shell: "echo {{ cryptsetup_pass }} | cryptsetup  luksOpen --key-file=- 
+         --batch-mode --verbose {{ crypt_dev }} {{crypt_blk}} "
+  when: luks_dev_is_active.rc > 0
 
-- name: check if directory on ecrypted device is empty
-  shell: 'echo g'
+- name: check if encrypted FS is mounted
+  shell: "mount | grep /dev/mapper/{{crypt_blk}}"
+  changed_when: False
+  failed_when: False
+  register: luks_dev_is_mounted
 
-- name: copy files from standard location to encrypted directory
-  shell: 'echo h'
+- name: create file system (if not already exists)
+  filesystem:
+    fstype: ext4
+    dev: "/dev/mapper/{{crypt_blk}}"
+  when:  luks_dev_is_mounted.rc > 0
+  failed_when: False
 
-- name: alter root dir in docerd config file
-  shell: 'echo i'
+  #!!!this module always changes fstab file!!!
+- name: mount active crypted fs
+  mount: 
+    path: "{{ crypt_mount_point }}"
+    src: "/dev/mapper/{{crypt_blk}}"
+    state: mounted
+    fstype: ext4
+    fstab: /tmp/del_me
+  when: luks_dev_is_mounted.rc > 0
+  failed_when: False
 
-- name: start docker
-  shell: 'echo j'
+

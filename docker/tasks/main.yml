@@ -1,0 +1,39 @@
+---
+
+
+
+
+
+
+
+
+
+
+#
+#- name: check if docker daemon is up and running
+#  shell: 'echo d'
+#  changed_when: False
+#
+#- name: disable auto start of dockerd 
+#  shell: 'echo e'
+#  changed_when: False
+#
+#- name: stop docker daemon
+#  shell: 'echo f'
+#  changed_when: False
+#
+#- name: check if directory on ecrypted device is empty
+#  shell: 'echo g'
+#  changed_when: False
+#
+#- name: copy files from standard location to encrypted directory
+#  shell: 'echo h'
+#  changed_when: False
+#
+#- name: alter root dir in docerd config file
+#  shell: 'echo i'
+#  changed_when: False
+#
+#- name: start docker
+#  shell: 'echo j'
+#  changed_when: False
