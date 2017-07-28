@@ -31,6 +31,20 @@
       -A INPUT -p udp -m udp --dport 4789 -j ACCEPT
       -A INPUT -p tcp -m tcp --dport 5000 -j ACCEPT
 
+- name: insert email-related rules
+  iptables_raw:
+    name: filter_email_rules
+    table: filter
+    weight: 10
+    keep_unmanaged: yes
+    state: present
+    backup: yes
+    rules: |
+      -A INPUT -p tcp -m tcp --dport 25 -j ACCEPT
+      -A INPUT -p tcp -m tcp --dport 143 -j ACCEPT
+      -A INPUT -p tcp -m tcp --dport 587 -j ACCEPT
+      -A INPUT -p tcp -m tcp --dport 993 -j ACCEPT
+
 - name: insert terminator (priority 99, low)
   iptables_raw:
     name: filter_default_reject
