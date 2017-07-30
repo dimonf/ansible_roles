@@ -18,6 +18,9 @@
     state: present
     backup: yes
     rules: |
+      -N LOGGING
+      -A LOGGING -m limit --limit 5/min -j LOG --log-prefix "IPTables Packet Dropped: " --log-level 7
+      -A LOGGING -j DROP
       -A INPUT -i lo -j ACCEPT
       -A INPUT -d 127.0.0.0/8 ! -i lo -j REJECT --reject-with icmp-port-unreachable
       -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
@@ -44,6 +47,18 @@
       -A INPUT -p tcp -m tcp --dport 143 -j ACCEPT
       -A INPUT -p tcp -m tcp --dport 587 -j ACCEPT
       -A INPUT -p tcp -m tcp --dport 993 -j ACCEPT
+
+- name: insert http server rules
+  iptables_raw:
+    name: filter_http
+    table: filter
+    weight: 10
+    keep_unmanaged: yes
+    state: present
+    backup: yes
+    rules: |
+      -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+      -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
 
 - name: insert terminator (priority 99, low)
   iptables_raw:
