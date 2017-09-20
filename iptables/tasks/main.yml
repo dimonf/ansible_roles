@@ -17,19 +17,7 @@
     keep_unmanaged: yes
     state: present
     backup: yes
-    rules: |
-      -P INPUT DROP
-      -A INPUT -i lo -j ACCEPT
-      -A INPUT -d 127.0.0.0/8 ! -i lo -j REJECT --reject-with icmp-port-unreachable
-      -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-      -A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
-      -A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
-      -A INPUT -p tcp -m tcp --dport 2376 -j ACCEPT
-      -A INPUT -p tcp -m tcp --dport 2377 -j ACCEPT
-      -A INPUT -p tcp -m tcp --dport 7946 -j ACCEPT
-      -A INPUT -p udp -m udp --dport 7946 -j ACCEPT
-      -A INPUT -p udp -m udp --dport 4789 -j ACCEPT
-      -A INPUT -p tcp -m tcp --dport 5000 -j ACCEPT
+    rules: "{{ iptables_input_rules }}"
 
 - name: insert terminator (priority 99, low)
   iptables_raw:
